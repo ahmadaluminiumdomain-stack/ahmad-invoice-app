@@ -8,20 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  
-  /* Modern Scrollbar */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: #f8fafc; }
-  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-  body { 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
-    background: #f8fafc; 
-    color: #334155; 
-    min-height: 100vh; 
-    -webkit-font-smoothing: antialiased; 
-  }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f8fafc; color: #334155; min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
   /* Header Box */
   .app-header { 
@@ -97,7 +84,7 @@
   /* Responsive Main Grid */
   .container { display: grid; grid-template-columns: 420px 1fr; gap: 0; height: calc(100vh - 73px); }
 
-  /* Mobile Switcher Tab Component */
+  /* Mobile Switcher Tab Component [1] */
   .mobile-tabs {
     display: none;
     background: #ffffff;
@@ -306,6 +293,7 @@
 </head>
 <body class="">
 
+<!-- Header Box -->
 <div class="app-header">
   <div class="header-left">
     <div class="logo-box">
@@ -339,6 +327,12 @@
       <span>Database Sync: <strong id="syncStatus">CONNECTED</strong></span>
     </div>
   </div>
+</div>
+
+<!-- Mobile Tab Navigation Selector [1] -->
+<div class="mobile-tabs">
+  <button class="mobile-tab-btn active" onclick="switchMobileTab('form')">📝 Edit Details</button>
+  <button class="mobile-tab-btn" onclick="switchMobileTab('preview')">👁️ Live Preview</button>
 </div>
 
 <div class="container">
@@ -378,10 +372,10 @@
     </div>
     
     <div class="form-group"><label>Date</label><input type="date" id="quotDate"></div>
-    <div class="form-group"><label>To (Client Name)</label><input type="text" id="clientName" placeholder="USA Moscato LLC"></div>
-    <div class="form-group"><label>Client Address</label><textarea id="clientAddr" rows="2" placeholder="Dubai Investments Park"></textarea></div>
-    <div class="form-group"><label>Subject</label><input type="text" id="subject" placeholder="Supply Of Glass panels"></div>
-    <div class="form-group"><label>Delivery Terms</label><input type="text" id="delivery" placeholder="After payment confirmation 4 working days."></div>
+    <div class="form-group"><label>To (Client Name)</label><input type="text" id="clientName" placeholder="Client Name"></div>
+    <div class="form-group"><label>Client Address</label><textarea id="clientAddr" rows="2" placeholder="Client Address"></textarea></div>
+    <div class="form-group"><label>Subject</label><input type="text" id="subject" placeholder="Subject Reference"></div>
+    <div class="form-group"><label>Delivery Terms</label><input type="text" id="delivery" placeholder="Delivery Terms"></div>
 
     <h2 style="margin-top:20px;">🔧 Line Items</h2>
     <div class="items-section" id="itemsContainer"></div>
@@ -525,6 +519,23 @@ function onInvoiceModeChange() {
     calcItem(id);
   });
   generateQuotation();
+}
+
+// --- MOBILE INTERACTION HANDLER [1] ---
+function switchMobileTab(tab) {
+  document.querySelectorAll('.mobile-tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('formPanel').classList.remove('active');
+  const previewPanel = document.querySelector('.preview-panel');
+  previewPanel.classList.remove('active');
+
+  if (tab === 'form') {
+    document.getElementById('formPanel').classList.add('active');
+    event.currentTarget.classList.add('active');
+  } else {
+    previewPanel.classList.add('active');
+    event.currentTarget.classList.add('active');
+    generateQuotation(); 
+  }
 }
 
 // --- CLOUD DATABASE HISTORY DIRECTORY LOADERS ---
@@ -708,10 +719,10 @@ function generateQuotation() {
   const mode = document.getElementById('invoiceMode').value;
   const ref = document.getElementById('quotRef').value || 'AA-2026-002';
   const date = formatDate(document.getElementById('quotDate').value);
-  const clientName = document.getElementById('clientName').value || 'USA Moscato LLC';
-  const clientAddr = document.getElementById('clientAddr').value || 'Dubai Investments Park';
-  const subject = document.getElementById('subject').value || 'Supply Of Glass panels';
-  const delivery = document.getElementById('delivery').value || 'After payment confirmation 4 working days.';
+  const clientName = document.getElementById('clientName').value || '';
+  const clientAddr = document.getElementById('clientAddr').value || '';
+  const subject = document.getElementById('subject').value || '';
+  const delivery = document.getElementById('delivery').value || '';
   const items = getItems();
 
   if (items.length === 0) { 
@@ -728,7 +739,7 @@ function generateQuotation() {
   let rows = '';
   items.forEach((item, idx) => {
     const descriptionText = item.desc ? `<br><span style="font-size:11px;color:#475569;line-height:1.4;">${item.desc}</span>` : '';
-    const particularsCell = `<strong>${item.name}</strong>${descriptionText}`;
+    const particularsCell = `<strong>${item.name || '&nbsp;'}</strong>${descriptionText}`;
     
     subtotalAmount += item.amount;
     subtotalAdvance += item.advance;
@@ -739,17 +750,17 @@ function generateQuotation() {
       rows += `<tr>
         <td style="text-align:center;font-weight:bold;vertical-align:top;">${idx + 1}</td>
         <td style="vertical-align:top;">${particularsCell}</td>
-        <td style="text-align:right;vertical-align:top;font-weight:bold;">${item.amount.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-        <td style="text-align:right;vertical-align:top;font-weight:bold;">${item.paid.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-        <td style="text-align:right;font-weight:bold;vertical-align:top;">${item.balance.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td style="text-align:right;vertical-align:top;font-weight:bold;">${item.amount > 0 ? item.amount.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}) : '&nbsp;'}</td>
+        <td style="text-align:right;vertical-align:top;font-weight:bold;">${item.paid > 0 ? item.paid.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}) : '&nbsp;'}</td>
+        <td style="text-align:right;font-weight:bold;vertical-align:top;">${item.balance > 0 ? item.balance.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}) : '&nbsp;'}</td>
       </tr>`;
     } else {
       rows += `<tr>
         <td style="text-align:center;font-weight:bold;vertical-align:top;">${idx + 1}</td>
         <td style="vertical-align:top;">${particularsCell}</td>
-        <td style="text-align:right;vertical-align:top;font-weight:bold;">${item.amount.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-        <td style="text-align:right;vertical-align:top;font-weight:bold;">${item.advance.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-        <td style="text-align:right;font-weight:bold;vertical-align:top;">${item.advance.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td style="text-align:right;vertical-align:top;font-weight:bold;">${item.amount > 0 ? item.amount.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}) : '&nbsp;'}</td>
+        <td style="text-align:right;vertical-align:top;font-weight:bold;">${item.advance > 0 ? item.advance.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}) : '&nbsp;'}</td>
+        <td style="text-align:right;font-weight:bold;vertical-align:top;">${item.advance > 0 ? item.advance.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}) : '&nbsp;'}</td>
       </tr>`;
     }
   });
@@ -763,7 +774,7 @@ function generateQuotation() {
         <th style="width:44%;">Particulars</th>
         <th style="width:16%;text-align:right;">Total Amount</th>
         <th style="width:16%;text-align:right;">Paid Amount</th>
-        <th style="width:16%;text-align:right;">Balance Amount</th>
+        <th style="width:18%;text-align:right;">Balance Amount</th>
       </tr>`;
   } else {
     tableHeaders = `
@@ -772,7 +783,7 @@ function generateQuotation() {
         <th style="width:44%;">Particulars</th>
         <th style="width:16%;text-align:right;">Amount</th>
         <th style="width:16%;text-align:right;">Advance @60%</th>
-        <th style="width:16%;text-align:right;">Total Amount</th>
+        <th style="width:18%;text-align:right;">Total Amount</th>
       </tr>`;
   }
 
@@ -783,45 +794,45 @@ function generateQuotation() {
     const grand = subtotalAdvance + vat;
     totalsRows += `
       <tr class="total-row">
-        <td colspan="2" style="border-right:none; text-align:right;"><strong>Amount excl. vat:</strong></td>
+        <td colspan="2" style="border-right:none; text-align:right;"><strong>Amount Excl. VAT:</strong></td>
         <td style="border-left:none; border-right:none;"></td>
         <td style="border-left:none; border-right:none;"></td>
-        <td style="text-align:right; font-weight:bold;">${subtotalAdvance.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} AED</td>
+        <td style="text-align:right; font-weight:bold; white-space: nowrap !important;">${subtotalAdvance.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} AED</td>
       </tr>
       <tr class="total-row">
-        <td colspan="2" style="border-right:none; text-align:right;"><strong>vat@5%:</strong></td>
+        <td colspan="2" style="border-right:none; text-align:right;"><strong>VAT @ 5%:</strong></td>
         <td style="border-left:none; border-right:none;"></td>
         <td style="border-left:none; border-right:none;"></td>
-        <td style="text-align:right; font-weight:bold;">${vat.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} AED</td>
+        <td style="text-align:right; font-weight:bold; white-space: nowrap !important;">${vat.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} AED</td>
       </tr>
       <tr class="total-row" style="background:#fffdfd!important; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;">
-        <td colspan="2" style="border-right:none; text-align:right; font-size:12px; color:#991b1b;"><strong>Total inc. Vat:</strong></td>
+        <td colspan="2" style="border-right:none; text-align:right; font-size:12px; color:#991b1b;"><strong>Total Inc. VAT:</strong></td>
         <td style="border-left:none; border-right:none;"></td>
         <td style="border-left:none; border-right:none;"></td>
-        <td style="text-align:right; color:#991b1b; font-size:13px; font-weight:bold;">${grand.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} AED</td>
+        <td style="text-align:right; color:#991b1b; font-size:13px; font-weight:bold; white-space: nowrap !important;">${grand.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} AED</td>
       </tr>`;
   } else if (mode === 'mode2') {
     totalsRows += `
       <tr class="total-row">
-        <td colspan="2" style="border-right:none; text-align:right;"><strong>total amount:</strong></td>
+        <td colspan="2" style="border-right:none; text-align:right;"><strong>Total Amount:</strong></td>
         <td style="border-left:none; border-right:none;"></td>
         <td style="border-left:none; border-right:none;"></td>
-        <td style="text-align:right; font-weight:bold;">${subtotalAdvance.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} AED</td>
+        <td style="text-align:right; font-weight:bold; white-space: nowrap !important;">${subtotalAdvance.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} AED</td>
       </tr>
       <tr class="total-row" style="background:#fffdfd!important; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;">
-        <td colspan="2" style="border-right:none; text-align:right; font-size:12px; color:#991b1b;"><strong>payable amount:</strong></td>
+        <td colspan="2" style="border-right:none; text-align:right; font-size:12px; color:#991b1b;"><strong>Payable Amount:</strong></td>
         <td style="border-left:none; border-right:none;"></td>
         <td style="border-left:none; border-right:none;"></td>
-        <td style="text-align:right; color:#991b1b; font-size:13px; font-weight:bold;">${subtotalAdvance.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} AED</td>
+        <td style="text-align:right; color:#991b1b; font-size:13px; font-weight:bold; white-space: nowrap !important;">${subtotalAdvance.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} AED</td>
       </tr>`;
   } else if (mode === 'mode3') {
     // Corrected to single-row formatting displaying only the single final balance total, keeping intermediate columns blank [1, 2]
     totalsRows += `
       <tr class="total-row" style="background:#fffdfd!important; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;">
-        <td colspan="2" style="border-right:none; text-align:right; font-size:12px; color:#991b1b;"><strong>total payable / grand total:</strong></td>
+        <td colspan="2" style="border-right:none; text-align:right; font-size:12px; color:#991b1b;"><strong>Total Payable / Grand Total:</strong></td>
         <td style="border-left:none; border-right:none;"></td>
         <td style="border-left:none; border-right:none;"></td>
-        <td style="text-align:right; color:#991b1b; font-size:13px; font-weight:bold;">${subtotalBalance.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} AED</td>
+        <td style="text-align:right; color:#991b1b; font-size:13px; font-weight:bold; white-space: nowrap !important;">${subtotalBalance.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} AED</td>
       </tr>`;
   }
 
@@ -853,8 +864,8 @@ function generateQuotation() {
       <div class="client-meta-grid" style="margin-top: 15px;">
         <div>
           <div class="section-label">Client Details:</div>
-          <div><strong>To:</strong> ${clientName}</div>
-          <div style="margin-top: 4px; line-height: 1.4;"><strong>Address:</strong> ${clientAddr.replace(/\n/g, '<br>')}</div>
+          <div><strong>To:</strong> ${clientName || '&nbsp;'}</div>
+          <div style="margin-top: 4px; line-height: 1.4;"><strong>Address:</strong> ${clientAddr ? clientAddr.replace(/\n/g, '<br>') : '&nbsp;'}</div>
         </div>
         <div style="text-align: right;">
           <div class="section-label" style="text-align: right;">Document Info:</div>
@@ -865,7 +876,7 @@ function generateQuotation() {
       
       <!-- Blue Double line Subject strip matching PDF 215 exactly -->
       <div style="text-align:center;font-style:italic;font-weight:bold;font-size:14px;color:#2980b9;border-bottom:2px solid #2980b9;border-top:2px solid #2980b9;padding:8px 0;margin-bottom:20px;margin-top: 15px;">
-        Subject: ${subject}
+        Subject: ${subject || '&nbsp;'}
       </div>
 
       <table style="width:100%; border-collapse:collapse; margin-top:20px; table-layout:fixed;">
@@ -884,7 +895,7 @@ function generateQuotation() {
         <div style="width: 55%; padding-right: 20px;">
           <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 6px;">Delivery Terms:</div>
           <div style="font-size: 12px; color: #334155; line-height: 1.6; font-style: italic; border-left: 2px solid #991b1b; padding-left: 10px;">
-            ${delivery}
+            ${delivery || 'N/A'}
           </div>
         </div>
         
