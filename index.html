@@ -84,35 +84,6 @@
   /* Responsive Main Grid */
   .container { display: grid; grid-template-columns: 420px 1fr; gap: 0; height: calc(100vh - 73px); }
 
-  /* Mobile Switcher Tab Component [1] */
-  .mobile-tabs {
-    display: none;
-    background: #ffffff;
-    border-bottom: 1px solid #e2e8f0;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    width: 100%;
-  }
-  .mobile-tab-btn {
-    flex: 1;
-    background: none;
-    border: none;
-    padding: 14px;
-    font-size: 13px;
-    font-weight: 700;
-    color: #64748b;
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.15s;
-    border-bottom: 2px solid transparent;
-  }
-  .mobile-tab-btn.active {
-    color: #991b1b;
-    border-bottom-color: #991b1b;
-    background: #fffdfd;
-  }
-
   /* Sidebar styling */
   .form-panel { background: #ffffff; padding: 24px; overflow-y: auto; border-right: 1px solid #e2e8f0; }
   .form-panel h2 { color: #991b1b; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #f1f5f9; font-weight: 700; }
@@ -245,20 +216,62 @@
     background: #f1f5f9 !important;
   }
 
+  /* Multi-device Vertical Stack Layout Rules replacing tab selector scripts entirely */
   @media (max-width: 992px) {
-    /* Auto-scale sheet display cleanly inside mobile viewports [1] */
+    .container { 
+      display: flex !important; 
+      flex-direction: column !important; 
+      height: auto !important; 
+    }
+    .form-panel { 
+      width: 100% !important; 
+      height: auto !important; 
+      overflow-y: visible !important; 
+      border-right: none !important; 
+      border-bottom: 1px solid #cbd5e1 !important; 
+      padding: 16px !important;
+    }
+    
+    /* Interactive, beautifully aligned desktop viewport rendering stacked on bottom [1] */
     body:not(.pdf-export) .preview-panel {
       background: #e2e8f0 !important;
       display: flex;
       flex-direction: column;
       align-items: center !important;
-      padding: 16px 8px !important;
+      padding: 24px 8px !important;
+      width: 100% !important;
+      height: auto !important;
+      overflow-y: visible !important;
+    }
+    body:not(.pdf-export) .quotation-container {
+      width: 100% !important;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     body:not(.pdf-export) .quotation-page {
       width: 210mm !important;
-      zoom: 0.46; /* Adaptive default scaling zoom factors */
+      zoom: 0.9; /* Tablet default scale bounds */
       box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
       border: 1px solid #cbd5e1 !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    body:not(.pdf-export) .quotation-page {
+      zoom: 0.65;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    body:not(.pdf-export) .quotation-page {
+      zoom: 0.46;
+    }
+  }
+  
+  @media (max-width: 380px) {
+    body:not(.pdf-export) .quotation-page {
+      zoom: 0.41;
     }
   }
 
@@ -327,12 +340,6 @@
       <span>Database Sync: <strong id="syncStatus">CONNECTED</strong></span>
     </div>
   </div>
-</div>
-
-<!-- Mobile Tab Navigation Selector [1] -->
-<div class="mobile-tabs">
-  <button class="mobile-tab-btn active" onclick="switchMobileTab('form')">📝 Edit Details</button>
-  <button class="mobile-tab-btn" onclick="switchMobileTab('preview')">👁️ Live Preview</button>
 </div>
 
 <div class="container">
@@ -519,23 +526,6 @@ function onInvoiceModeChange() {
     calcItem(id);
   });
   generateQuotation();
-}
-
-// --- MOBILE INTERACTION HANDLER [1] ---
-function switchMobileTab(tab) {
-  document.querySelectorAll('.mobile-tab-btn').forEach(btn => btn.classList.remove('active'));
-  document.getElementById('formPanel').classList.remove('active');
-  const previewPanel = document.querySelector('.preview-panel');
-  previewPanel.classList.remove('active');
-
-  if (tab === 'form') {
-    document.getElementById('formPanel').classList.add('active');
-    event.currentTarget.classList.add('active');
-  } else {
-    previewPanel.classList.add('active');
-    event.currentTarget.classList.add('active');
-    generateQuotation(); 
-  }
 }
 
 // --- CLOUD DATABASE HISTORY DIRECTORY LOADERS ---
