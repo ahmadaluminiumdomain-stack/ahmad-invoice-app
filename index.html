@@ -292,7 +292,20 @@
     }
   }
 
-  /* --- EXPLICIT EXPORT OVERRIDES TO PERMANENTLY BAN TRAILING BLANK PAGES DURING PDF SAVE --- */
+  /* --- EXPLICIT EXPORT OVERRIDES TO PERMANENTLY BAN TRAILING BLANK PAGES AND EXTRA OFFSET SPACE --- */
+  body.pdf-export .preview-panel {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 794px !important;
+  }
+  body.pdf-export .quotation-container,
+  body.pdf-export #quotationDoc {
+    width: 794px !important;
+    min-width: 794px !important;
+    max-width: 794px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
   body.pdf-export .quotation-page {
     width: 794px !important;
     min-width: 794px !important;
@@ -301,6 +314,8 @@
     height: auto !important;
     padding: 15mm 20mm !important; /* Adjust padding to safe print dimensions */
     margin-bottom: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
   }
 </style>
 </head>
@@ -920,6 +935,13 @@ async function downloadPDF() {
     return;
   }
 
+  // Save the scroll coordinates before exporting
+  const savedScrollX = window.scrollX;
+  const savedScrollY = window.scrollY;
+
+  // Force scrolling window to top-left coordinates to prevent position shifts during canvas draw
+  window.scrollTo(0, 0);
+
   // Temporarily force desktop compiling mode to bypass overlapping viewport limitations
   document.body.classList.add('pdf-export');
 
@@ -931,7 +953,9 @@ async function downloadPDF() {
       scale: 2, 
       useCORS: true, 
       logging: false,
-      windowWidth: 800 // Forces the browser to calculate desktop layouts for the canvas drawing [1]
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: 794 // Forces canvas builder to compile on a standard 794px viewport
     },
     jsPDF:        { unit: 'pt', format: 'a4', orientation: 'portrait' }
   };
@@ -949,19 +973,21 @@ async function downloadPDF() {
         alert(`Successfully saved to folder: "${ref}.pdf"`);
         incrementReferenceNumber();
         document.body.classList.remove('pdf-export');
+        window.scrollTo(savedScrollX, savedScrollY); // Restore view coordinates
         return;
       }
     }
   } catch (err) {
-    document.body.classList.remove('pdf-export');
     console.error("Auto-save folder writing failed, falling back to browser download:", err);
   }
 
   html2pdf().set(opt).from(element).save().then(() => {
     incrementReferenceNumber();
     document.body.classList.remove('pdf-export');
+    window.scrollTo(savedScrollX, savedScrollY); // Restore view coordinates
   }).catch(err => {
     document.body.classList.remove('pdf-export');
+    window.scrollTo(savedScrollX, savedScrollY); // Restore view coordinates
     console.error("PDF download failed", err);
   });
 }
@@ -972,6 +998,7 @@ function incrementReferenceNumber() {
   if (numPart) {
     const usedNum = parseInt(numPart[0]);
     localStorage.setItem('nextInvNum', usedNum + 1);
+    const currentYear = new Date().getFullYear();
     document.getElementById('quotRef').value = "AA-" + currentYear + "-" + formatNumber(usedNum + 1);
   }
 }
