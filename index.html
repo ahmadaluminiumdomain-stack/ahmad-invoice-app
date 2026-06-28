@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ahmad Aluminium & Glass - Invoice System</title>
-<!-- html2pdf.js CDN library for programmatic high-fidelity PDF exports -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- Stable html2pdf.js 0.9.3 CDN library to prevent coordinate-shifting bugs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f8fafc; color: #334155; min-height: 100vh; -webkit-font-smoothing: antialiased; }
@@ -275,45 +275,100 @@
     }
   }
 
+  /* --- DETAILED MEDIA PRINT OVERRIDES --- */
   @media print {
-    @page { size: A4; margin: 0 !important; }
-    body { background: white !important; margin: 0 !important; padding: 0 !important; }
-    .app-header, .form-panel, .preview-toolbar, .page-break-divider { display: none !important; }
-    .container { display: block !important; width: 100% !important; }
-    .preview-panel { padding: 0 !important; margin: 0 !important; background: white !important; width: 100% !important; }
+    @page { 
+      size: A4; 
+      margin: 15mm 15mm 15mm 15mm !important; 
+    }
+    
+    html, body {
+      background: white !important; 
+      color: #000000 !important;
+      width: 100% !important;
+      height: auto !important;
+      min-height: auto !important;
+      overflow: visible !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    
+    .app-header, 
+    .form-panel, 
+    .preview-toolbar, 
+    .page-break-divider { 
+      display: none !important; 
+    }
+    
+    .container { 
+      display: block !important; 
+      width: 100% !important; 
+      height: auto !important;
+      overflow: visible !important;
+    }
+    
+    .preview-panel { 
+      display: block !important;
+      width: 100% !important;
+      height: auto !important;
+      overflow: visible !important;
+      background: white !important; 
+      padding: 0 !important; 
+      margin: 0 !important; 
+      border: none !important;
+    }
+
+    .quotation-container,
+    #quotationDoc {
+      display: block !important;
+      width: 100% !important;
+      height: auto !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    
     .quotation-page { 
+      display: block !important;
       box-shadow: none !important; 
       border: none !important; 
-      width: 210mm !important; 
+      width: 100% !important; 
+      max-width: 100% !important;
       height: auto !important; 
-      min-height: 100% !important; /* Safety height cushion to eliminate extra trailing pages */
-      padding: 15mm 20mm !important; 
+      min-height: auto !important; 
+      padding: 0 !important; 
       margin: 0 !important; 
+      overflow: visible !important;
+    }
+    
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
   }
 
-  /* --- EXPLICIT EXPORT OVERRIDES TO PERMANENTLY BAN TRAILING BLANK PAGES AND EXTRA OFFSET SPACE --- */
+  /* --- EXPLICIT EXPORT CSS OVERRIDES (Lock to exact 210mm A4 boundaries) --- */
   body.pdf-export .preview-panel {
     padding: 0 !important;
     margin: 0 !important;
-    width: 794px !important;
+    width: 210mm !important;
   }
   body.pdf-export .quotation-container,
   body.pdf-export #quotationDoc {
-    width: 794px !important;
-    min-width: 794px !important;
-    max-width: 794px !important;
+    width: 210mm !important;
+    min-width: 210mm !important;
+    max-width: 210mm !important;
     padding: 0 !important;
     margin: 0 !important;
   }
   body.pdf-export .quotation-page {
-    width: 794px !important;
-    min-width: 794px !important;
-    max-width: 794px !important;
-    min-height: auto !important; /* Overrides screen min-height 297mm to prevent overflow spacing generation */
+    width: 210mm !important;
+    min-width: 210mm !important;
+    max-width: 210mm !important;
+    min-height: auto !important; 
     height: auto !important;
-    padding: 15mm 20mm !important; /* Adjust padding to safe print dimensions */
-    margin-bottom: 0 !important;
+    padding: 15mm 20mm !important; 
+    margin: 0 !important;
     box-shadow: none !important;
     border: none !important;
   }
@@ -732,7 +787,7 @@ function generateQuotation() {
 
   if (items.length === 0) { 
     document.getElementById('quotationDoc').innerHTML = `
-      <div style="text-align:center; color:#94a3b8; padding:80px 0; font-size:14px; font-weight: 500;">Fill the form & click Generate Invoice</div>`;
+      <div style="text-align:center; color:#94a3b8; padding:80px 0; font-size:14px; font-weight: 500;">Fill form & Generate Invoice</div>`;
     return; 
   }
 
@@ -831,7 +886,6 @@ function generateQuotation() {
         <td style="text-align:right; color:#991b1b; font-size:13px; font-weight:bold; white-space: nowrap !important;">${subtotalAdvance.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} AED</td>
       </tr>`;
   } else if (mode === 'mode3') {
-    // Corrected to single-row formatting displaying only the single final balance total, keeping intermediate columns blank [1, 2]
     totalsRows += `
       <tr class="total-row" style="background:#fffdfd!important; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;">
         <td colspan="2" style="border-right:none; text-align:right; font-size:12px; color:#991b1b;"><strong>Total Payable / Grand Total:</strong></td>
@@ -928,21 +982,23 @@ function generateQuotation() {
 // --- AUTOMATIC SEQUENCE PDF SAVER ---
 async function downloadPDF() {
   const ref = document.getElementById('quotRef').value || 'AA-2026-002';
-  const element = document.getElementById('quotationDoc');
   
-  if (!element || element.innerHTML.includes('Fill form & Generate Invoice')) {
+  // Directly select the inner .quotation-page instead of the outer #quotationDoc container to bypass parent viewport offsets
+  const element = document.querySelector('.quotation-page');
+  
+  if (!element) {
     alert("Please generate the invoice first.");
     return;
   }
 
-  // Save the scroll coordinates before exporting
+  // Save original scroll states
   const savedScrollX = window.scrollX;
   const savedScrollY = window.scrollY;
 
   // Force scrolling window to top-left coordinates to prevent position shifts during canvas draw
   window.scrollTo(0, 0);
 
-  // Temporarily force desktop compiling mode to bypass overlapping viewport limitations
+  // Temporarily force desktop compiling mode to bypass viewport/responsive limitations
   document.body.classList.add('pdf-export');
 
   const opt = {
@@ -954,10 +1010,9 @@ async function downloadPDF() {
       useCORS: true, 
       logging: false,
       scrollX: 0,
-      scrollY: 0,
-      windowWidth: 794 // Forces canvas builder to compile on a standard 794px viewport
+      scrollY: 0
     },
-    jsPDF:        { unit: 'pt', format: 'a4', orientation: 'portrait' }
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
   try {
